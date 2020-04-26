@@ -16,23 +16,23 @@ class System:
         self.target = None
         self.obstacle = []
         
-    def add_pedastrian(pedastrian):
+    def add_pedastrian(self, pedastrian):
         #mark a pedastrian in the grid 
         self.pedastrian.append(pedastrian)
         
-    def remove_pedastrian(pedastrian):
+    def remove_pedastrian(self, pedastrian):
         #remove a pedastrian from the grid 
         self.pedastrian.remove(pedastrian)
         
-    def add_target(target):
+    def add_target(self, target):
         #set the target of the grid, limit of 1 target
         self.target = target
         
-    def remove_target(target):
+    def remove_target(self, target):
         #remove the target from the grid
         self.target = None
         
-    def add_obstacle(obs):
+    def add_obstacle(self, obs):
         #add obstacle in the grid
         self.obstacle.append(obs)
         
