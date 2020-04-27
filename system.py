@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
-
+import heapq
 import math
+import sys
 from enum import Enum
+from typing import Union, Tuple
 
 EMPTY = 'WHITE'
 PEDESTRIAN = 'RED'
@@ -12,10 +14,14 @@ OBSTACLE = 'BLACK'
 
 class Cell:
     # details of a cell
-    def __init__(self, row, col, state):
+    def __init__(self, col, row, state):
+        self.visited = False
         self.state = state
         self.row = row
         self.col = col
+        self.distanceFromTarget = sys.maxsize
+        self.adjacent_cells = []
+
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
@@ -23,46 +29,111 @@ class Cell:
         else:
             return False
 
+    def __lt__(self, other):
+        return self.distanceFromTarget < other.distanceFromTarget
+
+    def set_distance(self, dist: int):
+        self.distanceFromTarget = dist
+
+    def get_distance(self):
+        return self.distanceFromTarget
+
+    def set_visited(self):
+        self.visited = True
+
+
+def get_weight(cell: Cell):
+    if cell.state == OBSTACLE:
+        return sys.maxsize
+    elif cell.state == TARGET:
+        return 0
+    elif cell.state == PEDESTRIAN:
+        return 5
+    return 1
+
 
 class System:
     # A collection of cells
-    def __init__(self, rows, cols):
+    def __init__(self, cols, rows):
         self.rows = rows
         self.cols = cols
-        self.grid = [[Cell(i, j, EMPTY) for i in range(rows)] for j in range(cols)]
-        self.pedestrian = []
-        self.target = None
-        self.obstacle = []
-        
-    def add_pedestrian(self, pedestrian: Cell):
+        self.grid = [[Cell(i, j, EMPTY) for i in range(cols)] for j in range(rows)]
+        self.pedestrian = []  # Stores tuples of coordinate in the form (x: col, y: row)
+        self.target: Cell = None
+        self.obstacle = []  # Stores tuples of coordinate in the form (x: col, y: row)
+
+    def add_pedestrian_at(self, coordinates: tuple):
         # mark a pedestrian in the grid
-        self.pedestrian.append(pedestrian)
-        self.grid[pedestrian.col][pedestrian.row] = pedestrian
-        
-    def remove_pedestrian(self, pedestrian: Cell):
+        cell: Cell = self.grid[coordinates[0]][coordinates[1]]
+        self.pedestrian.append(cell)
+        cell.state = PEDESTRIAN
+
+    def remove_pedestrian_at(self, coordinates: tuple):
         # remove a pedestrian from the grid
-        self.grid[pedestrian.col][pedestrian.row] = Cell(pedestrian.col, pedestrian.row, EMPTY)
-        self.pedestrian.remove(pedestrian)
-        
-    def add_target(self, target: Cell):
+        cell: Cell = self.grid[coordinates[0]][coordinates[1]]
+        self.pedestrian.remove(cell)
+        cell.state = EMPTY
+
+    def add_target_at(self, coordinates: tuple):
         # set the target of the grid, limit of 1 target
-        self.target = target
-        self.grid[target.col][target.row] = target
-        
-    def remove_target(self, target: Cell):
-        # remove the target from the grid
-        self.grid[target.col][target.row] = Cell(target.col, target.row, EMPTY)
-        self.target = None
-        
-    def add_obstacle(self, obs: Cell):
+        cell: Cell = self.grid[coordinates[0]][coordinates[1]]
+        self.target = cell
+        cell.state = TARGET
+        return cell
+
+    # def remove_target_at(self, coordinates: tuple):
+    #     # remove the target from the grid
+    #     cell = self.grid[coordinates[0]][coordinates[1]]
+    #     self.target = cell
+    #     cell.state = EMPTY
+
+    def add_obstacle_at(self, coordinates: tuple):
         # add obstacle in the grid
-        self.obstacle.append(obs)
-        self.grid[obs.col][obs.row] = obs
+        cell: Cell = self.grid[coordinates[0]][coordinates[1]]
+        self.obstacle.append(cell)
+        cell.state = OBSTACLE
 
 
 def euclidean_distance(x: Cell, y: Cell):
     # distance between two cells
-    return math.sqrt((x.row - y.row)**2 + (x.col - y.col)**2)
+    return math.sqrt((x.row - y.row) ** 2 + (x.col - y.col) ** 2)
 
+
+def get_adjacent(cell: Cell):
+    """
+    Returns list of all the adjacent cells
+    :param cell:
+    :return:
+    """
+    return[]
+
+
+def evaluate_cell_distance(system: System, target: Cell):
+    target.set_distance(0)
+    unvisited_queue = [(target.get_distance(), target)]
+
+    while len(unvisited_queue):
+        unvisited = heapq.heappop(unvisited_queue)
+        current_cell = unvisited[1]
+        # current_cell = heapq.heappop(unvisited_queue)
+        current_cell.set_visited()
+
+        for next_cell in get_adjacent(current_cell):
+            if next_cell.visited:
+                continue
+            new_dist = current_cell.get_distance() + get_weight(next_cell)
+
+            if new_dist < next_cell.get_distance():
+                next_cell.set_distance(new_dist)
+                next_cell.set_previous(current_cell)
+
+        while len(unvisited_queue):
+            heapq.heappop(unvisited_queue)
+
+        for row in system.grid:
+            for cell in row:
+                if not cell.visited:
+                    unvisited_queue.append((cell.get_distance(), cell))
+        heapq.heapify(unvisited_queue)
 
 

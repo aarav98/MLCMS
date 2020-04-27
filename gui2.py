@@ -5,23 +5,26 @@ import json
 
 
 def initialize_system(file_name):
+    """
+    Reads the scenario file and initializes the system with pro
+    :param file_name:
+    :return:
+    """
     with open(file_name) as scenario:
         data = json.load(scenario)
     rows = data['rows']
     cols = data['cols']
-    system = model.System(rows, cols)
-    for row, col in data['pedestrians']:
-        pedestrian = model.Cell(row, col, model.PEDESTRIAN)
-        system.add_pedestrian(pedestrian)
+    system = model.System(cols, rows)
+    for col, row in data['pedestrians']:
+        system.add_pedestrian_at(coordinates=(col, row))
 
-    for row, col in data['obstacles']:
-        obstacle = model.Cell(row, col, model.OBSTACLE)
-        system.add_obstacle(obstacle)
+    for col, row in data['obstacles']:
+        system.add_obstacle_at(coordinates=(col, row))
 
-    row, col = data['target']
-    target = model.Cell(row, col, model.TARGET)
-    system.add_target(target)
+    col, row = data['target']
+    target = system.add_target_at(coordinates=(col, row))
 
+    model.evaluate_cell_distance(system, target)
     return system
 
 
@@ -86,9 +89,10 @@ class ButtonPanel(wx.Panel):
 
 
 def main():
-    file_name = input("Please enter a scenario file name: ")
+    # file_name = input("Please enter a scenario file name: ")
     app = wx.App()
-    gui = Frame(parent= None, system=initialize_system('Scenarios/' + file_name))
+    # gui = Frame(parent= None, system=initialize_system('Scenarios/' + file_name))
+    gui = Frame(parent=None, system=initialize_system('Scenarios/scenario_task2.json'))
     gui.Show()
     app.MainLoop()
 
