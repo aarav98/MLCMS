@@ -1,4 +1,5 @@
 import wx
+import sys
 import system as model
 import json
 
@@ -85,8 +86,9 @@ class ButtonPanel(wx.Panel):
 
 
 def main():
+    file_name = input("Please enter a scenario file name: ")
     app = wx.App()
-    gui = Frame(parent= None, system=initialize_system('Scenarios/scenario_task2.json'))
+    gui = Frame(parent= None, system=initialize_system('Scenarios/' + file_name))
     gui.Show()
     app.MainLoop()
 
