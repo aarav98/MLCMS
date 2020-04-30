@@ -1,6 +1,6 @@
 {
-    "rows": 50,
-    "cols": 50,
+    "rows": 26,
+    "cols": 26,
     "pedestrians": [
         [5, 25]
     ],
