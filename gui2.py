@@ -6,7 +6,7 @@ import json
 
 def initialize_system(file_name):
     """
-    Reads the scenario file and initializes the system with pro
+    Reads the scenario file and initializes the system
     :param file_name:
     :return:
     """
@@ -35,8 +35,8 @@ class Frame(wx.Frame):
         self.cell_size = 10
         self.InitUI()
 
+
     def InitUI(self):
-        # self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.SetTitle("Cellular Automaton")
         self.SetSize((self.system.cols + 10) * self.cell_size, (self.system.rows + 10) * self.cell_size)
         self.canvas_panel = Canvas(self)
@@ -57,20 +57,22 @@ class Canvas(wx.Panel):
         self.parent = parent
 
     def OnSize(self, event):
-        # print("OnSize" + str(event))
-        # self.SetClientRect(event.GetRect()) # no need
         self.Refresh()  # MUST have this, else the rectangle gets rendered corruptly when resizing the window!
         event.Skip()  # seems to reduce the ammount of OnSize and OnPaint events generated when resizing the window
 
     def OnPaint(self, event):
         dc = wx.PaintDC(self)
         dc.Clear()
+        # print(self.parent.system.__str__())
         for row in self.parent.system.grid:
             for cell in row:
-                # dc.SetPen(wx.Pen(cell.state))
                 dc.SetBrush(wx.Brush(cell.state))
                 dc.DrawRectangle(cell.row * self.parent.cell_size, cell.col * self.parent.cell_size,
                                  self.parent.cell_size, self.parent.cell_size)
+
+    def color_gui(self, event):
+        self.parent.system.update_sys()
+        self.OnPaint(event)
 
 
 class ButtonPanel(wx.Panel):
@@ -78,6 +80,7 @@ class ButtonPanel(wx.Panel):
         super(ButtonPanel, self).__init__(parent, id, pos, size, style, name)
         self.SetSize(10*parent.cell_size, parent.system.rows*parent.cell_size)
         self.button_start = wx.Button(self, -1, "Start")
+        self.button_start.Bind(wx.EVT_BUTTON, parent.canvas_panel.color_gui)
         self.button_stop = wx.Button(self, -1, "Stop")
         self.button_step = wx.Button(self, -1, "Step")
         sizer_1 = wx.BoxSizer(wx.VERTICAL)
@@ -92,7 +95,7 @@ def main():
     # file_name = input("Please enter a scenario file name: ")
     app = wx.App()
     # gui = Frame(parent= None, system=initialize_system('Scenarios/' + file_name))
-    gui = Frame(parent=None, system=initialize_system('Scenarios/scenario_task2.json'))
+    gui = Frame(parent=None, system=initialize_system('Scenarios/scenario5.json'))
     gui.Show()
     app.MainLoop()
 

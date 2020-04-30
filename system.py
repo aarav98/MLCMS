@@ -19,9 +19,9 @@ class Cell:
         self.state = state
         self.row = row
         self.col = col
+        self.next_cell = None
         self.distanceFromTarget = sys.maxsize
         self.adjacent_cells = []
-
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
@@ -32,24 +32,21 @@ class Cell:
     def __lt__(self, other):
         return self.distanceFromTarget < other.distanceFromTarget
 
-    def set_distance(self, dist: int):
+    def __str__(self):
+        return "|(" + str(self.col) + "," + str(self.row) + ") Next Cell: " + str(self.next_cell.col) + "," \
+               + str(self.next_cell.row) + ")|"
+
+    def set_distance(self, dist: float):
         self.distanceFromTarget = dist
 
     def get_distance(self):
-        return self.distanceFromTarget
+        return float(self.distanceFromTarget)
 
     def set_visited(self):
         self.visited = True
 
-
-def get_weight(cell: Cell):
-    if cell.state == OBSTACLE:
-        return sys.maxsize
-    elif cell.state == TARGET:
-        return 0
-    elif cell.state == PEDESTRIAN:
-        return 5
-    return 1
+    def set_previous(self, cell):
+        self.next_cell = cell
 
 
 class System:
@@ -61,6 +58,12 @@ class System:
         self.pedestrian = []  # Stores tuples of coordinate in the form (x: col, y: row)
         self.target: Cell = None
         self.obstacle = []  # Stores tuples of coordinate in the form (x: col, y: row)
+
+    def __str__(self):
+        for row in self.grid:
+            print("\n")
+            for cell in row:
+                print(str(cell))
 
     def add_pedestrian_at(self, coordinates: tuple):
         # mark a pedestrian in the grid
@@ -93,19 +96,65 @@ class System:
         self.obstacle.append(cell)
         cell.state = OBSTACLE
 
+    def update_sys(self):
+        # print("Call to Update system")
+        # cell_obj = Cell(26, 26)
+        # system = System(26, 26)
+        for cell in self.pedestrian:
+            if cell == self.target:
+                self.pedestrian.remove(cell)
+                cell.state = TARGET
+                continue
+            self.pedestrian.remove(cell)
+            self.pedestrian.append(cell.next_cell)
+            cell.state = EMPTY
+            cell.next_cell.state = PEDESTRIAN
+
 
 def euclidean_distance(x: Cell, y: Cell):
     # distance between two cells
     return math.sqrt((x.row - y.row) ** 2 + (x.col - y.col) ** 2)
 
 
-def get_adjacent(cell: Cell):
+def get_weight(cell: Cell, target: Cell):
+    if cell.state == OBSTACLE:
+        return float(sys.maxsize)
+    elif cell.state == TARGET:
+        return 0.0
+    elif cell.state == PEDESTRIAN:
+        return 5.0
+    return euclidean_distance(cell, target)
+
+
+def get_adjacent(cell, system):
     """
     Returns list of all the adjacent cells
-    :param cell:
-    :return:
+    :param: Cell, System:
+    :return: --> Cell
     """
-    return[]
+    rows = system.rows
+    cols = system.cols
+    row = cell.row
+    col = cell.col
+    adjacent_cell = []
+    if rows != (row + 1):
+        adjacent_cell.append(system.grid[row + 1][col])
+        if col + 1 != cols:
+            adjacent_cell.append(system.grid[row + 1][col + 1])
+        if col - 1 >= 0:
+            adjacent_cell.append(system.grid[row + 1][col - 1])
+    if row - 1 >= 0:
+        adjacent_cell.append(system.grid[row - 1][col])
+        if col + 1 != cols:
+            adjacent_cell.append(system.grid[row - 1][col + 1])
+        if col - 1 >= 0:
+            adjacent_cell.append(system.grid[row - 1][col - 1])
+    if col + 1 != cols:
+        adjacent_cell.append(system.grid[row][col + 1])
+    if col - 1 >= 0:
+        adjacent_cell.append(system.grid[row][col - 1])
+
+    return adjacent_cell
 
 
 def evaluate_cell_distance(system: System, target: Cell):
@@ -118,10 +167,10 @@ def evaluate_cell_distance(system: System, target: Cell):
         # current_cell = heapq.heappop(unvisited_queue)
         current_cell.set_visited()
 
-        for next_cell in get_adjacent(current_cell):
+        for next_cell in get_adjacent(current_cell, system):
             if next_cell.visited:
                 continue
-            new_dist = current_cell.get_distance() + get_weight(next_cell)
+            new_dist = current_cell.get_distance() + get_weight(next_cell, target)
 
             if new_dist < next_cell.get_distance():
                 next_cell.set_distance(new_dist)
@@ -135,5 +184,3 @@ def evaluate_cell_distance(system: System, target: Cell):
                 if not cell.visited:
                     unvisited_queue.append((cell.get_distance(), cell))
         heapq.heapify(unvisited_queue)
-
-
