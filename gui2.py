@@ -22,10 +22,10 @@ def initialize_system(file_name):
         system.add_obstacle_at(coordinates=(col, row))
 
     col, row = data['target']
-    target = system.add_target_at(coordinates=(col, row))
+    system.add_target_at(coordinates=(col, row))
 
-    # model.evaluate_cell_distance(system, target)
-    model.no_obstacle_avoidance(system)
+    system.evaluate_cell_utilities()
+    # model.no_obstacle_avoidance(system)
     return system
 
 
@@ -74,8 +74,8 @@ class Canvas(wx.Panel):
                                  self.parent.cell_size, self.parent.cell_size)
 
     def color_gui(self, event):
-        # self.parent.system.update_sys()
-        self.parent.system.no_obstacle_avoidance_update_sys()
+        self.parent.system.update_sys()
+        # self.parent.system.no_obstacle_avoidance_update_sys()
         self.OnPaint(event)
 
 
