@@ -3,6 +3,7 @@
 import heapq
 import math
 import sys
+import numpy as np
 from enum import Enum
 from typing import Union, Tuple
 
@@ -101,14 +102,24 @@ class System:
         # cell_obj = Cell(26, 26)
         # system = System(26, 26)
         for cell in self.pedestrian:
-            if cell == self.target:
-                self.pedestrian.remove(cell)
-                cell.state = TARGET
+            # if cell == self.target:
+            #     self.pedestrian.remove(cell)
+            #     cell.state = TARGET
+            #     continue
+            if cell.next_cell == self.target:
                 continue
             self.pedestrian.remove(cell)
             self.pedestrian.append(cell.next_cell)
             cell.state = EMPTY
             cell.next_cell.state = PEDESTRIAN
+            # Add get safe distance from other pedestrians here
+
+
+# def pedestrian_interaction_distance(current_cell: Cell):
+#     r_max = 2
+#     if current_cell.state == PEDESTRIAN:
+#         if distance_from_other_pedestrian < r_max:
+#             return np.exp(1/())
 
 
 def euclidean_distance(x: Cell, y: Cell):
@@ -116,14 +127,14 @@ def euclidean_distance(x: Cell, y: Cell):
     return math.sqrt((x.row - y.row) ** 2 + (x.col - y.col) ** 2)
 
 
-def get_weight(cell: Cell, target: Cell):
-    if cell.state == OBSTACLE:
+def get_weight(current_cell: Cell, next_cell: Cell):
+    if next_cell.state == OBSTACLE:
         return float(sys.maxsize)
-    elif cell.state == TARGET:
+    elif next_cell.state == TARGET:
         return 0.0
-    elif cell.state == PEDESTRIAN:
+    elif next_cell.state == PEDESTRIAN:
         return 5.0
-    return euclidean_distance(cell, target)
+    return euclidean_distance(current_cell, next_cell)
 
 
 def get_adjacent(cell, system):
@@ -170,7 +181,7 @@ def evaluate_cell_distance(system: System, target: Cell):
         for next_cell in get_adjacent(current_cell, system):
             if next_cell.visited:
                 continue
-            new_dist = current_cell.get_distance() + get_weight(next_cell, target)
+            new_dist = current_cell.get_distance() + get_weight(current_cell, next_cell)
 
             if new_dist < next_cell.get_distance():
                 next_cell.set_distance(new_dist)

@@ -95,7 +95,7 @@ def main():
     # file_name = input("Please enter a scenario file name: ")
     app = wx.App()
     # gui = Frame(parent= None, system=initialize_system('Scenarios/' + file_name))
-    gui = Frame(parent=None, system=initialize_system('Scenarios/scenario5.json'))
+    gui = Frame(parent=None, system=initialize_system('Scenarios/scenario2.json'))
     gui.Show()
     app.MainLoop()
 
