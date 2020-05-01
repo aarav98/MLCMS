@@ -12,6 +12,8 @@ PEDESTRIAN = 'RED'
 TARGET = 'YELLOW'
 OBSTACLE = 'BLACK'
 
+R_MAX = 2
+
 
 class Cell:
     # details of a cell
@@ -98,14 +100,10 @@ class System:
         cell.state = OBSTACLE
 
     def update_sys(self):
-        # print("Call to Update system")
-        # cell_obj = Cell(26, 26)
-        # system = System(26, 26)
+
+        # for pedestrian in self.pedestrian:
+
         for cell in self.pedestrian:
-            # if cell == self.target:
-            #     self.pedestrian.remove(cell)
-            #     cell.state = TARGET
-            #     continue
             if cell.next_cell == self.target:
                 continue
             self.pedestrian.remove(cell)
@@ -114,9 +112,18 @@ class System:
             cell.next_cell.state = PEDESTRIAN
             # Add get safe distance from other pedestrians here
 
+    def no_obstacle_avoidance_update_sys(self):
+        for cell in self.pedestrian:
+            for adjacent in get_adjacent(cell, self):
+                if adjacent.distanceFromTarget < cell.distanceFromTarget:
+                    cell.next_cell = adjacent
+            self.pedestrian.remove(cell)
+            self.pedestrian.append(cell.next_cell)
+            cell.state = EMPTY
+            cell.next_cell.state = PEDESTRIAN
+
 
 # def pedestrian_interaction_distance(current_cell: Cell):
-#     r_max = 2
 #     if current_cell.state == PEDESTRIAN:
 #         if distance_from_other_pedestrian < r_max:
 #             return np.exp(1/())
@@ -168,9 +175,9 @@ def get_adjacent(cell, system):
     return adjacent_cell
 
 
-def evaluate_cell_distance(system: System, target: Cell):
-    target.set_distance(0)
-    unvisited_queue = [(target.get_distance(), target)]
+def evaluate_cell_distance(system: System):
+    system.target.set_distance(0)
+    unvisited_queue = [(system.target.get_distance(), system.target)]
 
     while len(unvisited_queue):
         unvisited = heapq.heappop(unvisited_queue)
@@ -186,12 +193,22 @@ def evaluate_cell_distance(system: System, target: Cell):
             if new_dist < next_cell.get_distance():
                 next_cell.set_distance(new_dist)
                 next_cell.set_previous(current_cell)
+                heapq.heappush(unvisited_queue, (next_cell.get_distance(), next_cell))
 
-        while len(unvisited_queue):
-            heapq.heappop(unvisited_queue)
+        # while len(unvisited_queue):
+        #     heapq.heappop(unvisited_queue)
+        #
+        # for row in system.grid:
+        #     for cell in row:
+        #         if not cell.visited:
+        #             unvisited_queue.append((cell.get_distance(), cell))
+        # heapq.heapify(unvisited_queue)
 
-        for row in system.grid:
-            for cell in row:
-                if not cell.visited:
-                    unvisited_queue.append((cell.get_distance(), cell))
-        heapq.heapify(unvisited_queue)
+def no_obstacle_avoidance(system: System):
+    for row in system.grid:
+        for cell in row:
+            cell.distanceFromTarget = euclidean_distance(cell, system.target)
+            if cell.state == OBSTACLE:
+                cell.distanceFromTarget = sys.maxsize
+
+

@@ -24,7 +24,8 @@ def initialize_system(file_name):
     col, row = data['target']
     target = system.add_target_at(coordinates=(col, row))
 
-    model.evaluate_cell_distance(system, target)
+    # model.evaluate_cell_distance(system, target)
+    model.no_obstacle_avoidance(system)
     return system
 
 
@@ -32,16 +33,16 @@ class Frame(wx.Frame):
     def __init__(self, parent, system):
         wx.Frame.__init__(self, parent)
         self.system = system
-        self.cell_size = 10
+        self.cell_size = 5
         self.InitUI()
 
 
     def InitUI(self):
         self.SetTitle("Cellular Automaton")
-        self.SetSize((self.system.cols + 10) * self.cell_size, (self.system.rows + 10) * self.cell_size)
+        self.SetSize(self.system.cols * self.cell_size, (self.system.rows + 10) * self.cell_size)
         self.canvas_panel = Canvas(self)
         self.button_panel = ButtonPanel(self)
-        sizer_1 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_1 = wx.BoxSizer(wx.VERTICAL)
         sizer_1.Add(self.canvas_panel, 1, wx.EXPAND | wx.ALL, 0)
         sizer_1.Add(self.button_panel, 0, wx.EXPAND | wx.ALL, 1)
         self.SetSizer(sizer_1)
@@ -66,25 +67,28 @@ class Canvas(wx.Panel):
         # print(self.parent.system.__str__())
         for row in self.parent.system.grid:
             for cell in row:
+                if cell.state == model.EMPTY:
+                    continue
                 dc.SetBrush(wx.Brush(cell.state))
                 dc.DrawRectangle(cell.row * self.parent.cell_size, cell.col * self.parent.cell_size,
                                  self.parent.cell_size, self.parent.cell_size)
 
     def color_gui(self, event):
-        self.parent.system.update_sys()
+        # self.parent.system.update_sys()
+        self.parent.system.no_obstacle_avoidance_update_sys()
         self.OnPaint(event)
 
 
 class ButtonPanel(wx.Panel):
     def __init__(self, parent: Frame, id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.DefaultSize, style=0, name="ButtonPanel"):
         super(ButtonPanel, self).__init__(parent, id, pos, size, style, name)
-        self.SetSize(10*parent.cell_size, parent.system.rows*parent.cell_size)
+        # self.SetSize(10*parent.cell_size, parent.system.rows*parent.cell_size)
         self.button_start = wx.Button(self, -1, "Start")
         self.button_start.Bind(wx.EVT_BUTTON, parent.canvas_panel.color_gui)
         self.button_stop = wx.Button(self, -1, "Stop")
         self.button_step = wx.Button(self, -1, "Step")
-        sizer_1 = wx.BoxSizer(wx.VERTICAL)
-        sizer_1.Add(self.button_start, 1, 0)
+        sizer_1 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_1.Add(self.button_start, 1,wx.EXPAND | wx.ALL, 0)
         sizer_1.Add(self.button_stop, 1, wx.EXPAND | wx.ALL, 0)
         sizer_1.Add(self.button_step, 1, wx.EXPAND | wx.ALL, 0)
         self.SetSizer(sizer_1)
@@ -95,7 +99,7 @@ def main():
     # file_name = input("Please enter a scenario file name: ")
     app = wx.App()
     # gui = Frame(parent= None, system=initialize_system('Scenarios/' + file_name))
-    gui = Frame(parent=None, system=initialize_system('Scenarios/scenario2.json'))
+    gui = Frame(parent=None, system=initialize_system('Scenarios/scenario4.json'))
     gui.Show()
     app.MainLoop()
 
