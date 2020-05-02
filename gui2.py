@@ -12,8 +12,8 @@ def initialize_system(file_name):
     """
     with open(file_name) as scenario:
         data = json.load(scenario)
-    rows = data['rows']
-    cols = data['cols']
+    cols = data['rows']
+    rows = data['cols']
     system = model.System(cols, rows)
     for col, row in data['pedestrians']:
         system.add_pedestrian_at(coordinates=(col, row))
@@ -25,6 +25,7 @@ def initialize_system(file_name):
     system.add_target_at(coordinates=(col, row))
 
     system.evaluate_cell_utilities()
+    system.print_utilities()
     # model.no_obstacle_avoidance(system)
     return system
 
@@ -33,13 +34,13 @@ class Frame(wx.Frame):
     def __init__(self, parent, system):
         wx.Frame.__init__(self, parent)
         self.system = system
-        self.cell_size = 5
+        self.cell_size = 10
         self.InitUI()
 
 
     def InitUI(self):
         self.SetTitle("Cellular Automaton")
-        self.SetSize(self.system.cols * self.cell_size, (self.system.rows + 10) * self.cell_size)
+        self.SetSize(self.system.rows * self.cell_size, self.system.cols * self.cell_size + 50)
         self.canvas_panel = Canvas(self)
         self.button_panel = ButtonPanel(self)
         sizer_1 = wx.BoxSizer(wx.VERTICAL)
@@ -67,11 +68,14 @@ class Canvas(wx.Panel):
         # print(self.parent.system.__str__())
         for row in self.parent.system.grid:
             for cell in row:
-                if cell.state == model.EMPTY:
-                    continue
+                # if cell.state == model.EMPTY:
+                #     continue
                 dc.SetBrush(wx.Brush(cell.state))
                 dc.DrawRectangle(cell.row * self.parent.cell_size, cell.col * self.parent.cell_size,
                                  self.parent.cell_size, self.parent.cell_size)
+                # dc.SetPen(wx.Pen("BLACK"))
+                # dc.DrawText(str(round(cell.distance_utility,2)), cell.row * self.parent.cell_size, cell.col * self.parent.cell_size,
+                #                  self.parent.cell_size, self.parent.cell_size)
 
     def color_gui(self, event):
         self.parent.system.update_sys()
@@ -99,7 +103,7 @@ def main():
     # file_name = input("Please enter a scenario file name: ")
     app = wx.App()
     # gui = Frame(parent= None, system=initialize_system('Scenarios/' + file_name))
-    gui = Frame(parent=None, system=initialize_system('Scenarios/scenario4.json'))
+    gui = Frame(parent=None, system=initialize_system('Scenarios/scenario2.json'))
     gui.Show()
     app.MainLoop()
 

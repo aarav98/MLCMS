@@ -24,7 +24,7 @@ class Cell:
         self.row = row
         self.col = col
         self.next_cell = None
-        self.distance_utility = sys.maxsize
+        self.distance_utility = float(sys.maxsize)
         self.pedestrian_utility = 0
         self.adjacent_cells = []
 
@@ -100,6 +100,12 @@ class System:
             for cell in row:
                 print(str(cell))
 
+    def print_utilities(self):
+        for row in self.grid:
+            for cell in row:
+                print("{:05.2f}".format(cell.distance_utility), end="  ")
+            print()
+
     def add_pedestrian_at(self, coordinates: tuple):
         # mark a pedestrian in the grid
         cell: Cell = self.grid[coordinates[0]][coordinates[1]]
@@ -142,13 +148,13 @@ class System:
             cell.next_cell.state = PEDESTRIAN
 
     def update_sys(self):
-        for cell in self.pedestrian:
-            if cell.next_cell == self.target:
+        for ped in self.pedestrian:
+            if ped.next_cell == self.target:
                 continue
-            self.pedestrian.remove(cell)
-            self.pedestrian.append(cell.next_cell)
-            cell.state = EMPTY
-            cell.next_cell.state = PEDESTRIAN
+            self.pedestrian.remove(ped)
+            self.pedestrian.append(ped.next_cell)
+            ped.state = EMPTY
+            ped.next_cell.state = PEDESTRIAN
 
     def evaluate_cell_utilities(self):
         self.target.set_distance(0)
@@ -163,7 +169,7 @@ class System:
             for next_cell in current_cell.get_adjacent():
                 if next_cell.visited:
                     continue
-                new_dist = current_cell.get_utility() + get_distance_utilities(current_cell, next_cell)
+                new_dist = current_cell.get_utility() + get_euclidean_distance(current_cell, next_cell)
 
                 if new_dist < next_cell.get_utility():
                     next_cell.set_distance(new_dist)
@@ -173,7 +179,7 @@ class System:
     def no_obstacle_avoidance(self):
         for row in self.grid:
             for cell in row:
-                cell.distance_utility = euclidean_distance(cell, self.target)
+                cell.distance_utility = get_euclidean_distance(cell, self.target)
                 if cell.state == OBSTACLE:
                     cell.distance_utility = sys.maxsize
 
@@ -181,15 +187,7 @@ class System:
 # def get_pedestrian_utilities(cell: Cell):
 
 
-
-
-# def pedestrian_interaction_distance(current_cell: Cell):
-#     if current_cell.state == PEDESTRIAN:
-#         if distance_from_other_pedestrian < r_max:
-#             return np.exp(1/())
-
-
-def euclidean_distance(x: Cell, y: Cell):
+def get_euclidean_distance(x: Cell, y: Cell):
     # distance between two cells
     return math.sqrt((x.row - y.row) ** 2 + (x.col - y.col) ** 2)
 
@@ -201,6 +199,6 @@ def get_distance_utilities(current_cell: Cell, next_cell: Cell):
         return 0.0
     elif next_cell.state == PEDESTRIAN:
         return 5.0
-    return euclidean_distance(current_cell, next_cell)
+    return get_euclidean_distance(current_cell, next_cell)
 
 
