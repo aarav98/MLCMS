@@ -169,7 +169,7 @@ class System:
             for next_cell in current_cell.get_adjacent():
                 if next_cell.visited:
                     continue
-                new_dist = current_cell.get_utility() + get_euclidean_distance(current_cell, next_cell)
+                new_dist = current_cell.get_utility() + get_distance_utilities(current_cell, next_cell)
 
                 if new_dist < next_cell.get_utility():
                     next_cell.set_distance(new_dist)
