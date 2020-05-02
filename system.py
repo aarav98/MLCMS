@@ -144,9 +144,8 @@ class System:
                     if adjacent.distance_utility < cell.distance_utility:
                         cell.next_cell = adjacent
                 if cell.next_cell is None:
+                    print('The pedestrian is stuck')
                     continue
-            else:
-                print('stuck')
             self.pedestrian.remove(cell)
             self.pedestrian.append(cell.next_cell)
             cell.state = EMPTY
@@ -205,5 +204,3 @@ def get_distance_utilities(current_cell: Cell, next_cell: Cell):
     elif next_cell.state == PEDESTRIAN:
         return 5.0
     return get_euclidean_distance(current_cell, next_cell)
-
-

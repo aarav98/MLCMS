@@ -6,7 +6,7 @@ import json
 file_name = 'Scenarios/scenario4.json'
 with open(file_name) as scenario:
     data = json.load(scenario)
-obst_avoid = data['obstacle_avoidance']
+obstacle_avoidance = data['obstacle_avoidance']
 
 
 def initialize_system(file_name):
@@ -15,8 +15,6 @@ def initialize_system(file_name):
     :param file_name:
     :return:
     """
-    with open(file_name) as scenario:
-        data = json.load(scenario)
     cols = data['rows']
     rows = data['cols']
     system = model.System(cols, rows)
@@ -29,7 +27,7 @@ def initialize_system(file_name):
     col, row = data['target']
     system.add_target_at(coordinates=(col, row))
 
-    if obst_avoid == "True":
+    if obstacle_avoidance == "True":
         system.evaluate_cell_utilities()
         # system.print_utilities()
     else:
@@ -88,7 +86,7 @@ class Canvas(wx.Panel):
                 #                  self.parent.cell_size, self.parent.cell_size)
 
     def color_gui(self, event):
-        if obst_avoid == "True":
+        if obstacle_avoidance == "True":
             self.parent.system.update_sys()
         else:
             self.parent.system.no_obstacle_avoidance_update_sys()
