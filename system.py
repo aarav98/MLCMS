@@ -139,9 +139,14 @@ class System:
 
     def no_obstacle_avoidance_update_sys(self):
         for cell in self.pedestrian:
-            for adjacent in cell.get_adjacent():
-                if adjacent.distance_utility < cell.distance_utility:
-                    cell.next_cell = adjacent
+            if cell is not None:
+                for adjacent in cell.get_adjacent():
+                    if adjacent.distance_utility < cell.distance_utility:
+                        cell.next_cell = adjacent
+                if cell.next_cell is None:
+                    continue
+            else:
+                print('stuck')
             self.pedestrian.remove(cell)
             self.pedestrian.append(cell.next_cell)
             cell.state = EMPTY

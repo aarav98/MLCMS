@@ -1,9 +1,9 @@
 {
-    "rows": 100,
-    "cols": 100,
+    "rows": 25,
+    "cols": 25,
     "pedestrians": [
         [0,0]
     ],
-    "target": [25, 25],
+    "target": [24, 24],
     "obstacles": []
 }
