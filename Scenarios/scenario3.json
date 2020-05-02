@@ -4,6 +4,7 @@
     "pedestrians": [
         [5, 25], [15, 10], [15, 40], [38, 17], [38, 32]
     ],
+    "obstacle_avoidance": "True",
     "target": [25, 25],
     "obstacles": []
 }

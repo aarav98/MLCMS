@@ -4,6 +4,7 @@
     "pedestrians": [
         [7, 7], [9, 7], [11, 7], [13, 7], [7, 9], [13, 9]
     ],
+    "obstacle_avoidance": "True",
     "target": [
         8,
         33

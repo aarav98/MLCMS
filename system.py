@@ -4,8 +4,7 @@ import heapq
 import math
 import sys
 import numpy as np
-from enum import Enum
-from typing import Union, Tuple
+import skfmm
 
 EMPTY = 'WHITE'
 PEDESTRIAN = 'RED'
@@ -186,6 +185,44 @@ class System:
                 cell.distance_utility = get_euclidean_distance(cell, self.target)
                 if cell.state == OBSTACLE:
                     cell.distance_utility = sys.maxsize
+
+    def update_sys_fmm(self):
+        for p in self.pedestrian:
+            print("reached here")
+            path = self.calc_fmm((p.row, p.col))
+            print(path)
+            if self.grid[path[0][0]][path[0][1]] == self.target:
+                continue
+            self.remove_pedestrian_at((p.row, p.col))
+            self.add_pedestrian_at(path[0])
+            print("reached here")
+            # print(self.grid[self.pedestrian[0][0]][self.pedestrian[0][1]].state)
+
+    def calc_fmm(self, p):
+        t_grid = np.array(np.ones_like(self.grid), dtype=np.double)
+        mask = np.array(0 * np.ones_like(self.grid), dtype=bool)
+        t_grid[self.target.row, self.target.col] = -1
+        for i in self.obstacle:
+            mask[i.row][i.col] = True
+        phi = np.ma.MaskedArray(t_grid, mask)
+        d = skfmm.distance(phi)
+
+        return self.calc_fmm_path(d, p)
+
+    def calc_fmm_path(self, distance, p):
+        path = []
+        while (self.target.row, self.target.col) != p:
+            p_adj_cell = self.grid[p[0]][p[1]].get_adjacent()
+            p_adj = [(i.row, i.col) for i in p_adj_cell if (i.row, i.col) not in path]
+            p_adj = np.asarray(p_adj)
+            d = distance[p_adj[:, 0], p_adj[:, 1]]
+            idx = np.where(distance == np.amin(d))
+            idx = list(zip(idx[0], idx[1]))
+            idx = [i for i in idx if i in p_adj]
+            path.append(idx[0])
+            p = idx[0]
+
+        return path
 
 
 # def get_pedestrian_utilities(cell: Cell):
