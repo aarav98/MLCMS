@@ -2,8 +2,11 @@
     "rows": 25,
     "cols": 25,
     "pedestrians": [
-        [0,0]
+        [0,0], [23,23]
     ],
+    "obstacle_avoidance": "True",
     "target": [24, 24],
-    "obstacles": []
+    "obstacles": [
+        [22,22]
+    ]
 }
