@@ -4,7 +4,7 @@ import system as model
 import json
 
 # [5, 25], [5,24], [4,25], [6,25], [4,24], [3,24], [2,24], [1,24], [5,26],[4,26], [3,26], [2,26], [1,26],
-file_name = 'Scenarios/RiMEA_Test6.json'
+file_name = 'Scenarios/RiMEA_Test6_2.json'
 with open(file_name) as scenario:
     data = json.load(scenario)
 obstacle_avoidance = data['obstacle_avoidance']
@@ -30,7 +30,7 @@ def initialize_system():
 
     if obstacle_avoidance == "True":
         system.evaluate_cell_utilities()
-        system.print_distance_utilities()
+        # system.print_distance_utilities()
     else:
         system.no_obstacle_avoidance()
     # system.evaluate_cell_utilities()
@@ -43,7 +43,7 @@ class Frame(wx.Frame):
     def __init__(self, parent, system):
         wx.Frame.__init__(self, parent)
         self.system = system
-        self.cell_size = 15
+        self.cell_size = 5
         self.InitUI()
 
     def InitUI(self):
@@ -76,8 +76,8 @@ class Canvas(wx.Panel):
         # print(self.parent.system.__str__())
         for col in self.parent.system.grid:
             for cell in col:
-                # if cell.state == model.EMPTY:
-                #     continue
+                if cell.state == model.EMPTY:
+                    continue
                 dc.SetBrush(wx.Brush(cell.state))
                 dc.DrawRectangle(cell.col * self.parent.cell_size, cell.row * self.parent.cell_size,
                                  self.parent.cell_size, self.parent.cell_size)

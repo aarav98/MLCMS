@@ -131,6 +131,17 @@ class System:
                 else:
                     print("{:05.2f}".format(cell.pedestrian_utility), end="  ")
             print()
+        print()
+
+    def print_utilities(self):
+        for row in self.grid:
+            for cell in row:
+                if cell.pedestrian_utility + cell.distance_utility >= sys.maxsize:
+                    print(" MAX ", end="  ")
+                else:
+                    print("{:05.2f}".format(cell.pedestrian_utility + cell.distance_utility), end="  ")
+            print()
+        print()
 
     def add_pedestrian_at(self, coordinates: tuple):
         # mark a pedestrian in the grid
@@ -181,15 +192,18 @@ class System:
         for ped in self.pedestrian:
             add_pedestrian_utilities(ped)
             # ped.pedestrian_utility = float(sys.maxsize)
-        self.print_pedestrian_utilities()
-        print()
+        # self.print_pedestrian_utilities()
+        # self.print_utilities()
+
+        next_cells = []
         for ped in self.pedestrian:
             next_cell = ped
-            for neighbour in ped.get_adjacent_minus_obstacles():
-                if neighbour.distance_utility + neighbour.pedestrian_utility <= next_cell.distance_utility + next_cell.pedestrian_utility:
+            for neighbour in [cell for cell in ped.get_adjacent_minus_obstacles() if cell not in next_cells + self.pedestrian]:
+                if neighbour.distance_utility + neighbour.pedestrian_utility <= next_cell.distance_utility + next_cell.pedestrian_utility and neighbour.state != PEDESTRIAN:
                     next_cell = neighbour
+                    next_cells.append(next_cell)
             ped.set_next(next_cell)
-            print(ped)
+            # print(ped)
         for ped in self.pedestrian:
             reset_pedestrian_utilities(ped)
             # ped.pedestrian_utility = float(sys.maxsize)

@@ -1,12 +1,12 @@
 {
-    "rows": 15,
-    "cols": 15,
+    "rows": 6,
+    "cols": 6,
     "pedestrians": [
-         [0,0], [0,10]
+         [0,0], [0,1],[1,0], [1,1], [1,2]
     ],
     "obstacles": [
 
     ],
     "obstacle_avoidance": "True",
-    "target": [14, 14]
+    "target": [5, 5]
 }
