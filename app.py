@@ -3,8 +3,6 @@ import model as model
 import json
 import os
 
-INITIALIZED = False
-
 
 def initialize_system(file_name):
     """
@@ -34,14 +32,14 @@ def initialize_system(file_name):
     system.add_target_at(coordinates=(col, row))
 
     # if obstacle_avoidance == "True":
-    #     system.evaluate_cell_utilities()
+    #     system.evaluate_dijikstra_cell_utilities()
     #     # system.print_distance_utilities()
     # else:
-    #     system.no_obstacle_avoidance()
+    #     system.evaluate_eucledian_cell_utilities()
     # system.init_fmm()
-    # system.evaluate_cell_utilities()
+    # system.evaluate_dijikstra_cell_utilities()
     # system.print_utilities()
-    # model.no_obstacle_avoidance(system)
+    # model.evaluate_eucledian_cell_utilities(system)
     return system
 
 
@@ -91,23 +89,25 @@ class Canvas(wx.Panel):
     def color_gui_dijikstra(self, event):
         self.parent.button_panel.button_fmm.Disable()
         self.parent.button_panel.button_eucledian_step.Disable()
-        if not INITIALIZED:
-            self.parent.system.evaluate_cell_utilities()
-        self.parent.system.update_sys()
+        if not self.parent.system.initialized:
+            self.parent.system.initialized = True
+            self.parent.system.evaluate_dijikstra_cell_utilities()
+        self.parent.system.update_system_dijikstra()
         self.OnPaint(event)
 
     def color_gui_fmm(self, event):
         self.parent.button_panel.button_dijikstra.Disable()
         self.parent.button_panel.button_eucledian_step.Disable()
-        self.parent.system.update_sys_fmm()
+        self.parent.system.update_system_fmm()
         self.OnPaint(event)
 
     def color_eucledian_step(self, event):
         self.parent.button_panel.button_dijikstra.Disable()
         self.parent.button_panel.button_fmm.Disable()
-        if not INITIALIZED:
-            self.parent.system.no_obstacle_avoidance()
-        self.parent.system.no_obstacle_avoidance_update_sys()
+        if not self.parent.system.initialized:
+            self.parent.system.initialized = True
+            self.parent.system.evaluate_eucledian_cell_utilities()
+        self.parent.system.update_system_euclidean()
         self.OnPaint(event)
 
 

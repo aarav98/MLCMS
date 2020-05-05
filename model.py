@@ -39,8 +39,7 @@ class Cell:
         return self.distance_utility < other.distance_utility
 
     def __str__(self):
-        return "|(" + str(self.row) + "," + str(self.col) + ") Next Cell: " + str(self.next_cell.row) + "," \
-               + str(self.next_cell.col) + ")|"
+        return "|(" + str(self.row) + "," + str(self.col) + ")|"
 
     def set_distance(self, dist: float):
         self.distance_utility = dist
@@ -99,6 +98,7 @@ class Cell:
 class System:
     # A collection of cells
     def __init__(self, cols, rows):
+        self.initialized = False
         self.rows = rows
         self.cols = cols
         self.grid = [[Cell(self, i, j, EMPTY) for i in range(cols)] for j in range(rows)]
@@ -207,19 +207,35 @@ class System:
         self.obstacles.append(cell)
         cell.state = OBSTACLE
 
-    def no_obstacle_avoidance_update_sys(self):
+    def evaluate_eucledian_cell_utilities(self):
+        for row in self.grid:
+            for cell in row:
+                cell.distance_utility = get_euclidean_distance(cell, self.target)
+                # if cell.state == OBSTACLE:
+                #     cell.distance_utility = sys.maxsize
+        # print(self.print_distance_utilities())
+
+    def update_system_euclidean(self):
+        next_cells = []
         for cell in self.pedestrian:
-            if cell is not None:
-                for adjacent in [x for x in cell.adjacent_cells if x != self.target]:
-                    if adjacent.distance_utility < cell.distance_utility:
-                        cell.next_cell = adjacent
-                if cell.next_cell is None:
-                    print('The pedestrian is stuck')
-                    continue
-            self.pedestrian.remove(cell)
-            self.pedestrian.append(cell.next_cell)
+            next_cell = cell
+            for adjacent in [x for x in cell.adjacent_cells if x != self.target and x not in next_cells+self.pedestrian]:
+                if adjacent.distance_utility < next_cell.distance_utility:
+                    next_cell = adjacent
+            if next_cell.state == OBSTACLE:
+                next_cell = cell
+            next_cells.append(next_cell)
+            cell.set_next(next_cell)
+
+        for cell in self.pedestrian:
+            # if cell.next_cell.state == OBSTACLE:
+            #     print('The pedestrian is stuck')
+            #     continue
+            # self.pedestrian.remove(cell)
+            # self.pedestrian.append(cell.next_cell)
             cell.state = EMPTY
             cell.next_cell.state = PEDESTRIAN
+        self.pedestrian = next_cells
 
     def get_next_pedestrian_cells(self):
         for ped in self.pedestrian:
@@ -241,7 +257,7 @@ class System:
             reset_pedestrian_utilities(ped)
             # ped.pedestrian_utility = float(sys.maxsize)
 
-    def update_sys(self):
+    def update_system_dijikstra(self):
         new_peds = []
         self.get_next_pedestrian_cells()
         for ped in self.pedestrian:
@@ -253,7 +269,7 @@ class System:
             new_peds.append(ped.next_cell)
         self.pedestrian = new_peds
 
-    def evaluate_cell_utilities(self):
+    def evaluate_dijikstra_cell_utilities(self):
         self.target.set_distance(0)
         unvisited_queue = [(self.target.get_utility(), self.target)]
 
@@ -275,18 +291,10 @@ class System:
                     # next_cell.set_previous(current_cell)
                     heapq.heappush(unvisited_queue, (next_cell.get_utility(), next_cell))
 
-    def no_obstacle_avoidance(self):
-        for row in self.grid:
-            for cell in row:
-                cell.distance_utility = get_euclidean_distance(cell, self.target)
-                if cell.state == OBSTACLE:
-                    cell.distance_utility = sys.maxsize
-
-    def update_sys_fmm(self):
+    def update_system_fmm(self):
         # print(self.pedestrian_fmm)
 
         ped = [((p[0][0], p[0][1]), p[1]) for p in self.pedestrian_fmm]
-
 
         for p in ped:
             # print("reached here")
