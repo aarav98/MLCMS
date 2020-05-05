@@ -1,8 +1,10 @@
 import wx
 import model as model
 import json
+import os
 
 INITIALIZED = False
+
 
 def initialize_system(file_name):
     """
@@ -13,16 +15,17 @@ def initialize_system(file_name):
 
     with open(file_name) as scenario:
         data = json.load(scenario)
-    # obstacle_avoidance = data['obstacle_avoidance']
     cols = data['cols']
     rows = data['rows']
     system = model.System(cols, rows)
 
-    # for col, row in data['pedestrians']:
-    # system.add_pedestrian_at(coordinates=(col, row))
+    for col, row in data['pedestrians']:
+        system.add_pedestrian_at(coordinates=(col, row))
 
-    for coord, speed in data['pedestrians_fmm']:
-        system.add_pedestrian_fmm_at(coord, speed)
+    if 'speeds' in data:
+        system.initialize_speeds(data["speeds"])
+    else:
+        system.initialize_speeds()
 
     for col, row in data['obstacles']:
         system.add_obstacle_at(coordinates=(col, row))
@@ -63,7 +66,7 @@ class Frame(wx.Frame):
 
 
 class Canvas(wx.Panel):
-    def __init__(self, parent, id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.DefaultSize, style=0, name="Canvas"):
+    def __init__(self, parent: Frame, id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.DefaultSize, style=0, name="Canvas"):
         super(Canvas, self).__init__(parent, id, pos, size, style, name)
         self.Bind(wx.EVT_SIZE, self.OnSize)
         self.Bind(wx.EVT_PAINT, self.OnPaint)
@@ -86,16 +89,22 @@ class Canvas(wx.Panel):
                                  self.parent.cell_size, self.parent.cell_size)
 
     def color_gui_dijikstra(self, event):
+        self.parent.button_panel.button_fmm.Disable()
+        self.parent.button_panel.button_eucledian_step.Disable()
         if not INITIALIZED:
             self.parent.system.evaluate_cell_utilities()
         self.parent.system.update_sys()
         self.OnPaint(event)
 
     def color_gui_fmm(self, event):
+        self.parent.button_panel.button_dijikstra.Disable()
+        self.parent.button_panel.button_eucledian_step.Disable()
         self.parent.system.update_sys_fmm()
         self.OnPaint(event)
 
     def color_eucledian_step(self, event):
+        self.parent.button_panel.button_dijikstra.Disable()
+        self.parent.button_panel.button_fmm.Disable()
         if not INITIALIZED:
             self.parent.system.no_obstacle_avoidance()
         self.parent.system.no_obstacle_avoidance_update_sys()
@@ -123,7 +132,7 @@ class ButtonPanel(wx.Panel):
 
 def get_path(wildcard):
     style = wx.FD_OPEN | wx.FD_FILE_MUST_EXIST
-    dialog = wx.FileDialog(None, 'Open', wildcard=wildcard, style=style)
+    dialog = wx.FileDialog(None, "Choose a file", os.getcwd()+'Scenarios/', "", wildcard, style=style)
     if dialog.ShowModal() == wx.ID_OK:
         path = dialog.GetPath()
     else:
@@ -138,6 +147,7 @@ def main():
     gui = Frame(parent=None, system=initialize_system(file_name))
     gui.Show()
     app.MainLoop()
+
 
 if __name__ == '__main__':
     main()

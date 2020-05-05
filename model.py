@@ -10,12 +10,8 @@ EMPTY = 'WHITE'
 PEDESTRIAN = 'RED'
 TARGET = 'YELLOW'
 OBSTACLE = 'BLUE'
-
 R_MAX = 2
 
-NO_OBSTACLE_AVOIDANCE = False
-DIJIKSTRA = 'False'
-FMM = 'False'
 
 class Cell:
     # details of a cell
@@ -160,8 +156,11 @@ class System:
         cell: Cell = self.grid[coordinates[0]][coordinates[1]]
         self.pedestrian.append(cell)
         cell.state = PEDESTRIAN
+        cell.travel_time = 0
+        cell.initial_predicted_time = 0
+        # self.pedestrian_fmm.append(([coordinates[0], coordinates[1]], speed))
 
-    def add_pedestrian_fmm_at(self, coordinates: tuple, speed, travel_time=0, init_time=0):
+    def add_pedestrian_fmm(self, coordinates: tuple, speed, travel_time, init_time):
         # mark a pedestrian in the grid
         self.add_pedestrian_at(coordinates)
 
@@ -170,9 +169,15 @@ class System:
         cell.travel_time = travel_time
         cell.initial_predicted_time = init_time
         self.pedestrian_fmm.append(([coordinates[0], coordinates[1]], speed))
-        #cell.state = PEDESTRIAN
+        # cell.state = PEDESTRIAN
 
-        
+    def initialize_speeds(self, speeds=None):
+        if speeds is None:
+            speeds = []
+        while len(speeds) < len(self.pedestrian):
+            speeds.append(1)
+        for pedestrian, speed in zip(self.pedestrian, speeds):
+            self.pedestrian_fmm.append(([pedestrian.row, pedestrian.col], speed))
 
     def remove_pedestrian_at(self, coordinates: tuple):
         # remove a pedestrian from the grid
@@ -195,12 +200,6 @@ class System:
         self.target = cell
         cell.state = TARGET
         return cell
-
-    # def remove_target_at(self, coordinates: tuple):
-    #     # remove the target from the grid
-    #     cell = self.grid[coordinates[0]][coordinates[1]]
-    #     self.target = cell
-    #     cell.state = EMPTY
 
     def add_obstacle_at(self, coordinates: tuple):
         # add obstacles in the grid
@@ -309,7 +308,7 @@ class System:
             # print('time = ', time)
             time += self.grid[p[0][0]][p[0][1]].travel_time
             self.remove_pedestrian_fmm_at((p[0][0], p[0][1]), speed)
-            self.add_pedestrian_fmm_at(path[0], speed, time, init_time)
+            self.add_pedestrian_fmm(path[0], speed, time, init_time)
 
         for i in self.pedestrian:
             print((i.row, i.col), '--->', 'Travel Time: ', i.travel_time, ', Predicted Time: ', i.initial_predicted_time)
