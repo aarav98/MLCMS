@@ -25,6 +25,9 @@ class Cell:
         self.distance_utility = float(sys.maxsize)
         self.pedestrian_utility = 0.0
         self.adjacent_cells = []
+        self.wait_fmm_penalty = 1
+        self.travel_time = 0
+        self.initial_predicted_time = 0
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
@@ -102,6 +105,11 @@ class System:
         self.pedestrian = []  # Stores tuples of coordinate in the form (x: col, y: row)
         self.target: Cell = None
         self.obstacles = []  # Stores tuples of coordinate in the form (x: col, y: row)
+        self.fmm_distance = np.array([])
+        self.tt = np.array([])
+        self.pedestrian_fmm = []
+        self.dx = 0.4
+        self.speed = np.array(np.ones_like(self.grid), dtype=np.double)
 
         for col in self.grid:
             for cell in col:
@@ -149,11 +157,29 @@ class System:
         self.pedestrian.append(cell)
         cell.state = PEDESTRIAN
 
+    def add_pedestrian_fmm_at(self, coordinates: tuple, speed, travel_time=0, init_time=0):
+        # mark a pedestrian in the grid
+        self.add_pedestrian_at(coordinates)
+        cell = self.grid[coordinates[0]][coordinates[1]]
+        cell.travel_time = travel_time
+        cell.initial_predicted_time = init_time
+        self.pedestrian_fmm.append(([coordinates[0], coordinates[1]], speed))
+        #cell.state = PEDESTRIAN
+
     def remove_pedestrian_at(self, coordinates: tuple):
         # remove a pedestrian from the grid
         cell: Cell = self.grid[coordinates[0]][coordinates[1]]
         self.pedestrian.remove(cell)
         cell.state = EMPTY
+        cell.travel_time = 0
+        cell.initial_predicted_time = 0
+
+    def remove_pedestrian_fmm_at(self, coordinates: tuple, speed):
+        # remove a pedestrian from the grid
+        self.remove_pedestrian_at(coordinates)
+        #print(self.pedestrian_fmm, ([coordinates[0], coordinates[1]], speed))
+        self.pedestrian_fmm.remove(([coordinates[0], coordinates[1]], speed))
+        #cell.state = EMPTY
 
     def add_target_at(self, coordinates: tuple):
         # set the target of the grid, limit of 1 target
@@ -250,32 +276,65 @@ class System:
                     cell.distance_utility = sys.maxsize
 
     def update_sys_fmm(self):
-        for p in self.pedestrian:
+        # print(self.pedestrian_fmm)
+
+        ped = [((p[0][0], p[0][1]), p[1]) for p in self.pedestrian_fmm]
+
+
+        for p in ped:
             # print("reached here")
-            path = self.calc_fmm((p.row, p.col))
+            # time = self.grid[p[0][0]][p[0][1]].travel_time
+            path, tt, time = self.calc_fmm(p, self.grid[p[0][0]][p[0][1]].wait_fmm_penalty)
+
             # print(path)
-            print((p.row, p.col), " --> ", path[0])
+
+            if self.grid[path[0][0]][path[0][1]].state == PEDESTRIAN:
+                # Can be thought of as the level of patience
+                self.grid[p[0][0]][p[0][1]].wait_fmm_penalty += 0.001
+                print(p, "--> Wait")
+                continue
             if self.grid[path[0][0]][path[0][1]] == self.target:
                 continue
-            self.remove_pedestrian_at((p.row, p.col))
-            self.add_pedestrian_at(path[0])
+            # print(p, " --> ", path[0], "Travel Time = ", tt)
+            init_time = self.grid[p[0][0]][p[0][1]].initial_predicted_time
+            speed = p[1]
+            # print('time = ', time)
+            time += self.grid[p[0][0]][p[0][1]].travel_time
+            self.remove_pedestrian_fmm_at((p[0][0], p[0][1]), speed)
+            self.add_pedestrian_fmm_at(path[0], speed, time, init_time)
+
+        for i in self.pedestrian:
+            print((i.row, i.col), '--->', 'Travel Time: ', i.travel_time, ', Predicted Time: ', i.initial_predicted_time)
             # print("reached here")
             # print(self.grid[self.pedestrian[0][0]][self.pedestrian[0][1]].state)
 
-    def calc_fmm(self, p):
-        t_grid = np.array(np.ones_like(self.grid), dtype=np.double)
-        mask = np.array(0 * np.ones_like(self.grid), dtype=bool)
-        t_grid[self.target.row, self.target.col] = -1
+    def calc_fmm(self, ped, wait=1):
+        p, speed = ped
+        if self.fmm_distance.size == 0:
+            t_grid = np.array(np.ones_like(self.grid), dtype=np.double)
+            mask = np.array(0 * np.ones_like(self.grid), dtype=bool)
+            t_grid[self.target.row, self.target.col] = -1
+            for i in self.obstacles:
+                mask[i.row][i.col] = True
+            phi = np.ma.MaskedArray(t_grid, mask)
+            self.fmm_distance = skfmm.distance(phi)
+            self.grid[p[0]][p[1]].initial_predicted_time = self.fmm_distance[p[0]][p[1]] / self.speed[p[0]][p[1]]
+            # print(self.grid[p[0]][p[1]].initial_predicted_time )
+            self.tt = skfmm.travel_time(phi, self.speed, self.dx)
+            for z in self.pedestrian_fmm:
+                self.grid[z[0][0]][z[0][1]].initial_predicted_time = self.fmm_distance[z[0][0]][z[0][1]]/z[1]
+                # print(z[1])
+                # print(self.grid[z.row][z.col].initial_predicted_time)
+        # print(t)
         for i in self.obstacles:
-            mask[i.row][i.col] = True
-        phi = np.ma.MaskedArray(t_grid, mask)
-        d = skfmm.distance(phi)
-
+            self.fmm_distance[i.row][i.col] = sys.maxsize
+        d = np.copy(self.fmm_distance)
+        t = np.copy(self.tt)
         for j in self.pedestrian:
-            d[j.row, j.col] += 100
-        return self.calc_fmm_path(d, p)
+            d[j.row, j.col] *= ((wait*(1 + (1/(d[j.row, j.col])*10))) + 1/d[j.row, j.col])
+        return self.calc_fmm_path(d, t, p, speed)
 
-    def calc_fmm_path(self, distance, p):
+    def calc_fmm_path(self, distance, t, p, speed):
 
         # print(p)
         path = []
@@ -290,11 +349,14 @@ class System:
 
         idx = np.where(distance == np.amin(d))
         idx = tuple(zip(idx[0], idx[1]))
+        tt = t[idx[0]]
         idx = [i for i in idx if i in p_copy]
 
         path.append(idx[0])
-
-        return path
+        time = (get_euclidean_distance(self.grid[p[0]][p[1]], self.grid[path[0][0]][path[0][1]])) / speed
+        # print(p, path)
+        # print(distance[p[0]][p[1]], distance[path[0][0]][path[0][1]], speed)
+        return path, tt, time
 
 
 def get_euclidean_distance(x: Cell, y: Cell):

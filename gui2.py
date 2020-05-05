@@ -4,7 +4,7 @@ import system as model
 import json
 
 # [5, 25], [5,24], [4,25], [6,25], [4,24], [3,24], [2,24], [1,24], [5,26],[4,26], [3,26], [2,26], [1,26],
-file_name = 'Scenarios/RiMEA_Test6_2.json'
+file_name = 'Scenarios/RiMEA_Test4.json'
 with open(file_name) as scenario:
     data = json.load(scenario)
 obstacle_avoidance = data['obstacle_avoidance']
@@ -19,8 +19,9 @@ def initialize_system():
     cols = data['cols']
     rows = data['rows']
     system = model.System(cols, rows)
-    for col, row in data['pedestrians']:
-        system.add_pedestrian_at(coordinates=(col, row))
+    
+    #for col, row in data['pedestrians']:
+        #system.add_pedestrian_at(coordinates=(col, row))
 
     for col, row in data['obstacles']:
         system.add_obstacle_at(coordinates=(col, row))
@@ -30,9 +31,12 @@ def initialize_system():
 
     if obstacle_avoidance == "True":
         system.evaluate_cell_utilities()
-        # system.print_distance_utilities()
+        #system.print_distance_utilities()
     else:
         system.no_obstacle_avoidance()
+    #system.init_fmm()
+    for coord, speed in data['pedestrians_fmm']:
+        system.add_pedestrian_fmm_at(coord, speed)
     # system.evaluate_cell_utilities()
     # system.print_utilities()
     # model.no_obstacle_avoidance(system)
