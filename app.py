@@ -1,27 +1,28 @@
 import wx
-import sys
-import system as model
+import model as model
 import json
 
-# [5, 25], [5,24], [4,25], [6,25], [4,24], [3,24], [2,24], [1,24], [5,26],[4,26], [3,26], [2,26], [1,26],
-file_name = 'Scenarios/RiMEA_Test4.json'
-with open(file_name) as scenario:
-    data = json.load(scenario)
-obstacle_avoidance = data['obstacle_avoidance']
+INITIALIZED = False
 
-
-def initialize_system():
+def initialize_system(file_name):
     """
     Reads the scenario file and initializes the system
     :param file_name:
     :return:
     """
+
+    with open(file_name) as scenario:
+        data = json.load(scenario)
+    # obstacle_avoidance = data['obstacle_avoidance']
     cols = data['cols']
     rows = data['rows']
     system = model.System(cols, rows)
-    
-    #for col, row in data['pedestrians']:
-        #system.add_pedestrian_at(coordinates=(col, row))
+
+    # for col, row in data['pedestrians']:
+    # system.add_pedestrian_at(coordinates=(col, row))
+
+    for coord, speed in data['pedestrians_fmm']:
+        system.add_pedestrian_fmm_at(coord, speed)
 
     for col, row in data['obstacles']:
         system.add_obstacle_at(coordinates=(col, row))
@@ -29,14 +30,12 @@ def initialize_system():
     col, row = data['target']
     system.add_target_at(coordinates=(col, row))
 
-    if obstacle_avoidance == "True":
-        system.evaluate_cell_utilities()
-        #system.print_distance_utilities()
-    else:
-        system.no_obstacle_avoidance()
-    #system.init_fmm()
-    for coord, speed in data['pedestrians_fmm']:
-        system.add_pedestrian_fmm_at(coord, speed)
+    # if obstacle_avoidance == "True":
+    #     system.evaluate_cell_utilities()
+    #     # system.print_distance_utilities()
+    # else:
+    #     system.no_obstacle_avoidance()
+    # system.init_fmm()
     # system.evaluate_cell_utilities()
     # system.print_utilities()
     # model.no_obstacle_avoidance(system)
@@ -87,6 +86,8 @@ class Canvas(wx.Panel):
                                  self.parent.cell_size, self.parent.cell_size)
 
     def color_gui_dijikstra(self, event):
+        if not INITIALIZED:
+            self.parent.system.evaluate_cell_utilities()
         self.parent.system.update_sys()
         self.OnPaint(event)
 
@@ -94,7 +95,9 @@ class Canvas(wx.Panel):
         self.parent.system.update_sys_fmm()
         self.OnPaint(event)
 
-    def color_gui_no_obs_avoidance(self, event):
+    def color_eucledian_step(self, event):
+        if not INITIALIZED:
+            self.parent.system.no_obstacle_avoidance()
         self.parent.system.no_obstacle_avoidance_update_sys()
         self.OnPaint(event)
 
@@ -108,23 +111,33 @@ class ButtonPanel(wx.Panel):
         self.button_dijikstra.Bind(wx.EVT_BUTTON, parent.canvas_panel.color_gui_dijikstra)
         self.button_fmm = wx.Button(self, -1, "FMM_Step")
         self.button_fmm.Bind(wx.EVT_BUTTON, parent.canvas_panel.color_gui_fmm)
-        self.button_step = wx.Button(self, -1, "Step")
+        self.button_eucledian_step = wx.Button(self, -1, "Eucledian Step")
+        self.button_eucledian_step.Bind(wx.EVT_BUTTON, parent.canvas_panel.color_eucledian_step)
         sizer_1 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_1.Add(self.button_dijikstra, 1, wx.EXPAND | wx.ALL, 0)
         sizer_1.Add(self.button_fmm, 1, wx.EXPAND | wx.ALL, 0)
-        sizer_1.Add(self.button_step, 1, wx.EXPAND | wx.ALL, 0)
+        sizer_1.Add(self.button_eucledian_step, 1, wx.EXPAND | wx.ALL, 0)
         self.SetSizer(sizer_1)
         self.Layout()
 
 
+def get_path(wildcard):
+    style = wx.FD_OPEN | wx.FD_FILE_MUST_EXIST
+    dialog = wx.FileDialog(None, 'Open', wildcard=wildcard, style=style)
+    if dialog.ShowModal() == wx.ID_OK:
+        path = dialog.GetPath()
+    else:
+        path = None
+    dialog.Destroy()
+    return path
+
+
 def main():
-    # file_name = input("Please enter a scenario file name: ")
     app = wx.App()
-    # gui = Frame(parent= None, system=initialize_system('Scenarios/' + file_name))
-    gui = Frame(parent=None, system=initialize_system())
+    file_name = get_path('.json')
+    gui = Frame(parent=None, system=initialize_system(file_name))
     gui.Show()
     app.MainLoop()
-
 
 if __name__ == '__main__':
     main()

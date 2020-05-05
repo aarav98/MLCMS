@@ -13,6 +13,10 @@ OBSTACLE = 'BLUE'
 
 R_MAX = 2
 
+NO_OBSTACLE_AVOIDANCE = False
+DIJIKSTRA = 'False'
+FMM = 'False'
+
 class Cell:
     # details of a cell
     def __init__(self, parent, col, row, state):
@@ -160,11 +164,15 @@ class System:
     def add_pedestrian_fmm_at(self, coordinates: tuple, speed, travel_time=0, init_time=0):
         # mark a pedestrian in the grid
         self.add_pedestrian_at(coordinates)
+
+        # coordinates = [(pedestrian.col,pedestrian.row) for pedestrian in pedestrians]
         cell = self.grid[coordinates[0]][coordinates[1]]
         cell.travel_time = travel_time
         cell.initial_predicted_time = init_time
         self.pedestrian_fmm.append(([coordinates[0], coordinates[1]], speed))
         #cell.state = PEDESTRIAN
+
+        
 
     def remove_pedestrian_at(self, coordinates: tuple):
         # remove a pedestrian from the grid
@@ -203,7 +211,7 @@ class System:
     def no_obstacle_avoidance_update_sys(self):
         for cell in self.pedestrian:
             if cell is not None:
-                for adjacent in cell.adjacent_cells:
+                for adjacent in [x for x in cell.adjacent_cells if x != self.target]:
                     if adjacent.distance_utility < cell.distance_utility:
                         cell.next_cell = adjacent
                 if cell.next_cell is None:
