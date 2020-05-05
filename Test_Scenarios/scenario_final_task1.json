@@ -1,0 +1,11 @@
+{
+    "rows": 100,
+    "cols": 100,
+    "pedestrians": [
+         [2, 2]
+    ],
+    "obstacles": [
+
+    ],
+    "target": [4, 3]
+}

@@ -10,12 +10,8 @@ EMPTY = 'WHITE'
 PEDESTRIAN = 'RED'
 TARGET = 'YELLOW'
 OBSTACLE = 'BLUE'
-
 R_MAX = 2
 
-NO_OBSTACLE_AVOIDANCE = False
-DIJIKSTRA = 'False'
-FMM = 'False'
 
 class Cell:
     # details of a cell
@@ -43,8 +39,7 @@ class Cell:
         return self.distance_utility < other.distance_utility
 
     def __str__(self):
-        return "|(" + str(self.row) + "," + str(self.col) + ") Next Cell: " + str(self.next_cell.row) + "," \
-               + str(self.next_cell.col) + ")|"
+        return "|(" + str(self.row) + "," + str(self.col) + ")|"
 
     def set_distance(self, dist: float):
         self.distance_utility = dist
@@ -103,6 +98,7 @@ class Cell:
 class System:
     # A collection of cells
     def __init__(self, cols, rows):
+        self.initialized = False
         self.rows = rows
         self.cols = cols
         self.grid = [[Cell(self, i, j, EMPTY) for i in range(cols)] for j in range(rows)]
@@ -160,8 +156,11 @@ class System:
         cell: Cell = self.grid[coordinates[0]][coordinates[1]]
         self.pedestrian.append(cell)
         cell.state = PEDESTRIAN
+        cell.travel_time = 0
+        cell.initial_predicted_time = 0
+        # self.pedestrian_fmm.append(([coordinates[0], coordinates[1]], speed))
 
-    def add_pedestrian_fmm_at(self, coordinates: tuple, speed, travel_time=0, init_time=0):
+    def add_pedestrian_fmm(self, coordinates: tuple, speed, travel_time, init_time):
         # mark a pedestrian in the grid
         self.add_pedestrian_at(coordinates)
 
@@ -170,9 +169,15 @@ class System:
         cell.travel_time = travel_time
         cell.initial_predicted_time = init_time
         self.pedestrian_fmm.append(([coordinates[0], coordinates[1]], speed))
-        #cell.state = PEDESTRIAN
+        # cell.state = PEDESTRIAN
 
-        
+    def initialize_speeds(self, speeds=None):
+        if speeds is None:
+            speeds = []
+        while len(speeds) < len(self.pedestrian):
+            speeds.append(1)
+        for pedestrian, speed in zip(self.pedestrian, speeds):
+            self.pedestrian_fmm.append(([pedestrian.row, pedestrian.col], speed))
 
     def remove_pedestrian_at(self, coordinates: tuple):
         # remove a pedestrian from the grid
@@ -196,31 +201,41 @@ class System:
         cell.state = TARGET
         return cell
 
-    # def remove_target_at(self, coordinates: tuple):
-    #     # remove the target from the grid
-    #     cell = self.grid[coordinates[0]][coordinates[1]]
-    #     self.target = cell
-    #     cell.state = EMPTY
-
     def add_obstacle_at(self, coordinates: tuple):
         # add obstacles in the grid
         cell: Cell = self.grid[coordinates[0]][coordinates[1]]
         self.obstacles.append(cell)
         cell.state = OBSTACLE
 
-    def no_obstacle_avoidance_update_sys(self):
+    def evaluate_eucledian_cell_utilities(self):
+        for row in self.grid:
+            for cell in row:
+                cell.distance_utility = get_euclidean_distance(cell, self.target)
+                # if cell.state == OBSTACLE:
+                #     cell.distance_utility = sys.maxsize
+        # print(self.print_distance_utilities())
+
+    def update_system_euclidean(self):
+        next_cells = []
         for cell in self.pedestrian:
-            if cell is not None:
-                for adjacent in [x for x in cell.adjacent_cells if x != self.target]:
-                    if adjacent.distance_utility < cell.distance_utility:
-                        cell.next_cell = adjacent
-                if cell.next_cell is None:
-                    print('The pedestrian is stuck')
-                    continue
-            self.pedestrian.remove(cell)
-            self.pedestrian.append(cell.next_cell)
+            next_cell = cell
+            for adjacent in [x for x in cell.adjacent_cells if x != self.target and x not in next_cells+self.pedestrian]:
+                if adjacent.distance_utility < next_cell.distance_utility:
+                    next_cell = adjacent
+            if next_cell.state == OBSTACLE:
+                next_cell = cell
+            next_cells.append(next_cell)
+            cell.set_next(next_cell)
+
+        for cell in self.pedestrian:
+            # if cell.next_cell.state == OBSTACLE:
+            #     print('The pedestrian is stuck')
+            #     continue
+            # self.pedestrian.remove(cell)
+            # self.pedestrian.append(cell.next_cell)
             cell.state = EMPTY
             cell.next_cell.state = PEDESTRIAN
+        self.pedestrian = next_cells
 
     def get_next_pedestrian_cells(self):
         for ped in self.pedestrian:
@@ -242,7 +257,7 @@ class System:
             reset_pedestrian_utilities(ped)
             # ped.pedestrian_utility = float(sys.maxsize)
 
-    def update_sys(self):
+    def update_system_dijikstra(self):
         new_peds = []
         self.get_next_pedestrian_cells()
         for ped in self.pedestrian:
@@ -254,7 +269,7 @@ class System:
             new_peds.append(ped.next_cell)
         self.pedestrian = new_peds
 
-    def evaluate_cell_utilities(self):
+    def evaluate_dijikstra_cell_utilities(self):
         self.target.set_distance(0)
         unvisited_queue = [(self.target.get_utility(), self.target)]
 
@@ -276,18 +291,10 @@ class System:
                     # next_cell.set_previous(current_cell)
                     heapq.heappush(unvisited_queue, (next_cell.get_utility(), next_cell))
 
-    def no_obstacle_avoidance(self):
-        for row in self.grid:
-            for cell in row:
-                cell.distance_utility = get_euclidean_distance(cell, self.target)
-                if cell.state == OBSTACLE:
-                    cell.distance_utility = sys.maxsize
-
-    def update_sys_fmm(self):
+    def update_system_fmm(self):
         # print(self.pedestrian_fmm)
 
         ped = [((p[0][0], p[0][1]), p[1]) for p in self.pedestrian_fmm]
-
 
         for p in ped:
             # print("reached here")
@@ -309,7 +316,7 @@ class System:
             # print('time = ', time)
             time += self.grid[p[0][0]][p[0][1]].travel_time
             self.remove_pedestrian_fmm_at((p[0][0], p[0][1]), speed)
-            self.add_pedestrian_fmm_at(path[0], speed, time, init_time)
+            self.add_pedestrian_fmm(path[0], speed, time, init_time)
 
         for i in self.pedestrian:
             print((i.row, i.col), '--->', 'Travel Time: ', i.travel_time, ', Predicted Time: ', i.initial_predicted_time)
