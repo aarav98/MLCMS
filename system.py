@@ -111,7 +111,6 @@ class System:
         self.dx = 0.4
         self.speed = np.array(np.ones_like(self.grid), dtype=np.double)
 
-
         for col in self.grid:
             for cell in col:
                 cell.adjacent_cells = cell.get_adjacent()
@@ -121,10 +120,6 @@ class System:
             print("\n")
             for cell in row:
                 print(str(cell))
-
-    # def init_fmm(self):
-        # for p in self.pedestrian_fmm:
-            # self.speed[p[0][0]][p[0][1]] = p[1]
 
     def print_distance_utilities(self):
         for row in self.grid:
@@ -282,7 +277,6 @@ class System:
 
     def update_sys_fmm(self):
         # print(self.pedestrian_fmm)
-
 
         ped = [((p[0][0], p[0][1]), p[1]) for p in self.pedestrian_fmm]
 

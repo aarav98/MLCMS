@@ -19,6 +19,7 @@ def initialize_system():
     cols = data['cols']
     rows = data['rows']
     system = model.System(cols, rows)
+    
     #for col, row in data['pedestrians']:
         #system.add_pedestrian_at(coordinates=(col, row))
 
@@ -46,7 +47,7 @@ class Frame(wx.Frame):
     def __init__(self, parent, system):
         wx.Frame.__init__(self, parent)
         self.system = system
-        self.cell_size = 10
+        self.cell_size = 5
         self.InitUI()
 
     def InitUI(self):
@@ -74,7 +75,6 @@ class Canvas(wx.Panel):
         event.Skip()  # seems to reduce the ammount of OnSize and OnPaint events generated when resizing the window
 
     def OnPaint(self, event):
-        self.Refresh()
         dc = wx.PaintDC(self)
         dc.Clear()
         # print(self.parent.system.__str__())
