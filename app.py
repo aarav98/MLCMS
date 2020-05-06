@@ -10,7 +10,6 @@ def initialize_system(file_name):
     :param file_name:
     :return:
     """
-
     with open(file_name) as scenario:
         data = json.load(scenario)
     cols = data['cols']
@@ -64,7 +63,8 @@ class Canvas(wx.Panel):
     """
     Panel that is painted at every step to pictorially show most updated state of the system.
     """
-    def __init__(self, parent: Frame, id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.DefaultSize, style=0, name="Canvas"):
+    def __init__(self, parent: Frame, id=wx.ID_ANY, pos=wx.DefaultPosition,
+                 size=wx.DefaultSize, style=0, name="Canvas"):
         super(Canvas, self).__init__(parent, id, pos, size, style, name)
         self.Bind(wx.EVT_SIZE, self.OnSize)
         self.Bind(wx.EVT_PAINT, self.OnPaint)
@@ -82,7 +82,6 @@ class Canvas(wx.Panel):
         """
         dc = wx.PaintDC(self)
         dc.Clear()
-        # print(self.parent.system.__str__())
         for col in self.parent.system.grid:
             for cell in col:
                 if cell.state == model.EMPTY and self.parent.cell_size <= 5:
@@ -140,7 +139,7 @@ class ButtonPanel(wx.Panel):
         self.button_dijikstra.Bind(wx.EVT_BUTTON, parent.canvas_panel.update_step_dijikstra)
         self.button_fmm = wx.Button(self, -1, "FMM_Step")
         self.button_fmm.Bind(wx.EVT_BUTTON, parent.canvas_panel.update_step_fmm)
-        self.button_eucledian_step = wx.Button(self, -1, "Eucledian Step")
+        self.button_eucledian_step = wx.Button(self, -1, "Euclidean_Step")
         self.button_eucledian_step.Bind(wx.EVT_BUTTON, parent.canvas_panel.update_step_euclidean)
         sizer_1 = wx.BoxSizer(wx.HORIZONTAL)
         sizer_1.Add(self.button_dijikstra, 1, wx.EXPAND | wx.ALL, 0)

@@ -323,7 +323,9 @@ class System:
             next_cell = ped
             for neighbour in [cell for cell in ped.get_adjacent_minus_obstacles() if
                               cell not in next_cells + self.pedestrian]:
-                if neighbour.distance_utility + neighbour.pedestrian_utility <= next_cell.distance_utility + next_cell.pedestrian_utility and neighbour.state != PEDESTRIAN:
+                if neighbour.distance_utility + neighbour.pedestrian_utility \
+                        <= next_cell.distance_utility + next_cell.pedestrian_utility \
+                        and neighbour.state != PEDESTRIAN:
                     next_cell = neighbour
                     next_cells.append(next_cell)
             ped.set_next(next_cell)
