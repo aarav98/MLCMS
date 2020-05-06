@@ -7,5 +7,6 @@
     "target": [25, 25],
     "obstacles": [
 
-    ]
+    ],
+    "cell_size": 10
 }
