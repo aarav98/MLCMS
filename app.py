@@ -156,7 +156,7 @@ def get_path(wildcard):
     :return:
     """
     style = wx.FD_OPEN | wx.FD_FILE_MUST_EXIST
-    dialog = wx.FileDialog(None, "Choose a file", os.getcwd()+'Scenarios/', "", wildcard, style=style)
+    dialog = wx.FileDialog(None, "Choose a file", os.getcwd()+'Test_Scenarios/', "", wildcard, style=style)
     if dialog.ShowModal() == wx.ID_OK:
         path = dialog.GetPath()
     else:
