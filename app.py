@@ -66,15 +66,15 @@ class Canvas(wx.Panel):
     def __init__(self, parent: Frame, id=wx.ID_ANY, pos=wx.DefaultPosition,
                  size=wx.DefaultSize, style=0, name="Canvas"):
         super(Canvas, self).__init__(parent, id, pos, size, style, name)
-        self.Bind(wx.EVT_SIZE, self.OnSize)
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_SIZE, self.on_size)
+        self.Bind(wx.EVT_PAINT, self.on_paint)
         self.parent = parent
 
-    def OnSize(self, event):
+    def on_size(self, event):
         self.Refresh()  # MUST have this, else the rectangle gets rendered corruptly when resizing the window!
-        event.Skip()  # seems to reduce the amount of OnSize and OnPaint events generated when resizing the window
+        event.Skip()  # seems to reduce the amount of on_size and on_paint events generated when resizing the window
 
-    def OnPaint(self, event):
+    def on_paint(self, event):
         """
         Prints the current state of the system on canvas (Panel).
         :param event:
@@ -102,7 +102,7 @@ class Canvas(wx.Panel):
             self.parent.system.initialized = True
             self.parent.system.evaluate_dijikstra_cell_utilities()
         self.parent.system.update_system_dijikstra()
-        self.OnPaint(event)
+        self.on_paint(event)
 
     def update_step_fmm(self, event):
         """
@@ -113,7 +113,7 @@ class Canvas(wx.Panel):
         self.parent.button_panel.button_dijikstra.Disable()
         self.parent.button_panel.button_eucledian_step.Disable()
         self.parent.system.update_system_fmm()
-        self.OnPaint(event)
+        self.on_paint(event)
 
     def update_step_euclidean(self, event):
         """
@@ -127,7 +127,7 @@ class Canvas(wx.Panel):
             self.parent.system.initialized = True
             self.parent.system.evaluate_euclidean_cell_utilities()
         self.parent.system.update_system_euclidean()
-        self.OnPaint(event)
+        self.on_paint(event)
 
 
 class ButtonPanel(wx.Panel):
