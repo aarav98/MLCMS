@@ -332,7 +332,7 @@ class System:
         for ped in self.pedestrian:
             reset_pedestrian_utilities(ped)
 
-    def update_system_dijikstra(self):
+    def update_system_dijkstra(self):
         """
         Updates pedestrian positions to next cells computed by get_next_pedestrian_cells()
         :return:
@@ -347,7 +347,7 @@ class System:
             new_peds.append(ped.next_cell)
         self.pedestrian = new_peds
 
-    def evaluate_dijikstra_cell_utilities(self):
+    def evaluate_dijkstra_cell_utilities(self):
         """
         Evaluates and initialises distance utilities for every
         cell using shortest path algorithm (dijikstra).

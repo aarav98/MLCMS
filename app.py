@@ -100,8 +100,8 @@ class Canvas(wx.Panel):
         self.parent.button_panel.button_eucledian_step.Disable()
         if not self.parent.system.initialized:
             self.parent.system.initialized = True
-            self.parent.system.evaluate_dijikstra_cell_utilities()
-        self.parent.system.update_system_dijikstra()
+            self.parent.system.evaluate_dijkstra_cell_utilities()
+        self.parent.system.update_system_dijkstra()
         self.on_paint(event)
 
     def update_step_fmm(self, event):
